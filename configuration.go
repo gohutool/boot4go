@@ -7,6 +7,7 @@ import (
 	"gopkg.in/yaml.v3"
 	"io/ioutil"
 	"os"
+	"strings"
 )
 
 /**
@@ -21,6 +22,10 @@ import (
 * 修改历史 : 1. [2022/4/8 19:43] 创建文件 by NST
 */
 
+func init() {
+	ConfigurationContext.LoadEnv()
+}
+
 type configurationContext struct {
 	data map[string]any
 }
@@ -28,6 +33,51 @@ type configurationContext struct {
 var ConfigurationContext = configurationContext{data: make(map[string]any)}
 
 var configLogger = log4go.LoggerManager.GetLogger("boot4go.configuration")
+
+func (c configurationContext) LoadEnv() {
+	envs := os.Environ()
+	for _, env := range envs {
+		idx := strings.Index(env, "=")
+		if idx >= 1 && idx < len(env)-1 {
+			c.Put(Substring(env, 0, idx), Substring(env, idx+1, -1))
+		} else {
+			c.Put(env, "")
+		}
+
+	}
+}
+
+func (c configurationContext) Put(key string, value any) {
+	ks := strings.Split(key, ".")
+	pm := c.data
+	l := len(ks)
+	ok := false
+
+	for idx, k := range ks {
+
+		if l == idx+1 {
+			pm[k] = value
+		} else {
+			m, exist := pm[k]
+
+			if exist {
+				m, ok = interface{}(m).(map[string]any)
+				if !ok {
+					pm[k] = make(map[string]any)
+					/*configLogger.Debug("%v is exist with %v, will be override with list", strings.Join(ks[:idx], "."), m)
+					pm[k] = make([]any, 10)
+					//pm[k]
+					pm[k] = append(pm[k].([]any), m)
+					pm[k] = append(pm[k].([]any), make(map[string]any))*/
+				}
+			} else {
+				pm[k] = make(map[string]any)
+			}
+
+			pm = pm[k].(map[string]any)
+		}
+	}
+}
 
 func (c configurationContext) IsConfigFileExist(filename string) bool {
 	_, err := os.Stat(filename)
@@ -39,14 +89,14 @@ func (c configurationContext) IsConfigFileExist(filename string) bool {
 	return true
 }
 
-func (c configurationContext) toMap() map[string]any {
+func (c configurationContext) ToMap() map[string]any {
 	return c.data
 }
 
 func (c configurationContext) GetValue(expression string) any {
 	context := StandardEvaluationContext{}
 	context.AddPropertyAccessor(MapAccessor{})
-	context.SetVariables(c.toMap())
+	context.SetVariables(c.ToMap())
 	parser := SpelExpressionParser{}
 
 	return parser.ParseExpression(expression).GetValueContext(&context)
