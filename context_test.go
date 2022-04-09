@@ -20,6 +20,8 @@ import (
 * 修改历史 : 1. [2022/4/7 10:01] 创建文件 by NST
 */
 
+var logger log4go.Logger
+
 func init() {
 	log4go.LoggerManager.InitWithDefaultConfig()
 
@@ -29,6 +31,8 @@ func init() {
 	/*
 		h := &Hello{}
 		Test{hello2: h.(IHello)}*/
+
+	logger = log4go.LoggerManager.GetLogger("boot4go.context.test")
 }
 
 type Test struct {
@@ -52,10 +56,6 @@ type IHello interface {
 	sayHello(t Test) Test
 }
 
-func (t Test) sayHello(t1 Test) Test {
-	return t1
-}
-
 func TestContext(t *testing.T) {
 	fmt.Println(log4go.LoggerManager)
 
@@ -72,12 +72,12 @@ func TestContext(t *testing.T) {
 
 	fmt.Println(ok)
 
-	var ih IHello = test
+	var ih IHello = &Hello{}
 
 	fmt.Println(type2Str(reflect.TypeOf(h)))
 	fmt.Println(type2Str(reflect.TypeOf(ih)))
 
-	fmt.Println(IHello.sayHello(test, *test))
+	fmt.Println(IHello.sayHello(ih, *test))
 
 	h.sayHello(*test)
 }
@@ -97,19 +97,23 @@ func TestGetBean(t *testing.T) {
 	bean, ok := Context.GetBean(Test{})
 
 	t1 := bean.(*Test)
-	fmt.Println(&t1.hello2, "  ", &t1.hello)
+	logger.Info(&t1.hello2, "  ", &t1.hello)
 
 	bean, _ = Context.getBeanByName("boot4go.Test")
 	t1 = bean.(*Test)
-	fmt.Println(&t1.hello2, "  ", &t1.hello)
+	logger.Info(&t1.hello2, "  ", &t1.hello)
 
-	fmt.Println(reflect.TypeOf(bean.(*Test)).String(), bean, ok)
+	logger.Info(reflect.TypeOf(bean.(*Test)).String(), ok)
+	logger.Info(bean)
 
-	fmt.Println(&t1.data, "  ", &t1.list)
+	logger.Info(&t1.data)
+	logger.Info(&t1.list)
+
+	time.Sleep(10 * time.Second)
 }
 
 func TestContextConfiguration(t *testing.T) {
-	//Context.type2Str(&Test{})
+
 	bean, ok := Context.GetBean(&Test{})
 	fmt.Println(reflect.TypeOf(bean.(*Test)).String(), bean, ok)
 

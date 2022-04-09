@@ -123,8 +123,11 @@ func (c *context) getBeanByType(t reflect.Type) (any, error) {
 
 	// get the Type of struct
 	t = reflect.TypeOf(newValue.Elem().Interface())
-	fmt.Println(t.NumField())
+	contextLogger.Debug("NumField=", t.NumField())
 	count := t.NumField()
+
+	c.RegistryBeanInstance(beanName, newValue.Interface())
+
 	for idx := 0; idx < count; idx++ {
 		f := t.Field(idx)
 		newFieldValue := newValue.Elem().FieldByName(f.Name)
@@ -132,7 +135,7 @@ func (c *context) getBeanByType(t reflect.Type) (any, error) {
 		var v any
 		k := f.Type.Kind()
 
-		fmt.Println(k, "\t\t", f.Type.String())
+		contextLogger.Debug(k, "\t\t", f.Type.String())
 
 		if k != reflect.Interface && k != reflect.Struct && k != reflect.Ptr {
 			if tag := f.Tag.Get("bootable"); len(tag) > 0 {
@@ -159,6 +162,12 @@ func (c *context) getBeanByType(t reflect.Type) (any, error) {
 
 			if b, _ := c.pooled[bn]; b != nil {
 				v = b
+			} else {
+				if k == reflect.Ptr {
+					v, _ = c.getBeanByType(newFieldValue.Elem().Type())
+				} else {
+					v, _ = c.getBeanByType(newFieldValue.Type())
+				}
 			}
 		}
 
@@ -195,8 +204,6 @@ func (c *context) getBeanByType(t reflect.Type) (any, error) {
 	//	//a, ok := type2Str(fv.Elem().Type())
 	//	//fmt.Println(f.Name, " ", a, " ", ok)
 	//}
-
-	c.RegistryBeanInstance(beanName, newValue.Interface())
 
 	return newValue.Interface(), nil
 	/*
