@@ -114,14 +114,14 @@ func TestGetBean(t *testing.T) {
 	bean, _ := Context.GetBean(Test{})
 
 	t1 := bean.(*Test)
-	logger.Info(&t1.hello)
+	logger.Info(t1.hello)
 	logger.Info("Hello2=" + t1.sayHello2("AAA"))
 	logger.Info("Hello=" + t1.sayHello("AAA"))
 	logger.Info("%v", &t1.hello)
 
 	bean, _ = Context.getBeanByName("boot4go.Test")
 	t1 = bean.(*Test)
-	logger.Info(&t1.hello)
+	logger.Info(t1.hello)
 	logger.Info("Hello2=" + t1.sayHello2("BBB"))
 	logger.Info("Hello=" + t1.sayHello("BBB"))
 	logger.Info("%v", &t1.hello)

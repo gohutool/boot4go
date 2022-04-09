@@ -34,7 +34,8 @@ import (
 The reference documentation includes detailed installation instructions as well as a comprehensive getting started guide.
 
 Code example:
--Autoconfiguration
+
+- Autoconfiguration
 
 ```
 apiVersion: policy/v1beta1
@@ -43,6 +44,9 @@ metadata:
   name: mysql-snapshot
   version: v1.0.1
   major: 1
+tag:
+  hello: TAG-HELLO-A
+  hello2: TAG-HELLO-B
 spec:
   privileged: false
   allowPrivilegeEscalation: false
@@ -64,17 +68,20 @@ spec:
     rule: RunAsAny
 ```
 
+- Test struct 
+
+Sample code will autowire test struct, it will autofill the properties using the yaml's configuration
 ```
 type Test struct {
 	age     int16          `bootable:"${metadata.major}"`
 	name    string         `bootable:"${metadata.name}"`
 	version string         `bootable:"${metadata.version}"`
-	hello   IHello         `bootable:"aaa"`
-	hello2  IHello         `bootable`
 	data    map[string]any `bootable:"${spec.runAsUser}"`
 	list    []any          `bootable:"${spec.volumes}"`
 }
 ```
+
+- Test autowired properties with expression string
 
 ```
 func TestContextConfiguration(t *testing.T) {
@@ -92,50 +99,93 @@ func TestContextConfiguration(t *testing.T) {
 - Output
 ```
 [19:11:28 CST 2022/04/09 677] [INFO][test] (github.com/gohutool/boot4go.TestContextConfiguration:118) YAML map[=::=::\: ALLUSERSPROFILE:C:\ProgramData APPCODE_VM_OPTIONS:E:\BaiduNetdiskDownload\JetBrains 2022 最 新版本全家桶激活\方式2：激活到2099年补丁\ja-netfilter-all\vmoptions\appcode.                 vmoptions APPDATA:C:\Users\NST\AppData\Roaming AR:ar CC:gcc CGO_CFLAGS:-O0 -g CGO_ENABLED:1 CLION_VM_OPTIONS:E:\BaiduNetdiskDownload\JetBrains 2022 最新版   本全家桶激活\方式2：激活到2099年补丁\ja-netfilter-all\vmoptions\clion.vmopti               ons COMPUTERNAME:NST-PC CXX:g++ ComSpec:C:\WINDOWS\system32\cmd.exe CommonProgramFiles:C:\Program Files\Common Files CommonProgramFiles(x86):C:\Program Files (x86)\Common Files CommonProgramW6432:C:\Program Files\Common Files DATAGRIP_VM_OPTIONS:E:\BaiduNetdiskDownload\JetBrains 2022 最新版本全家桶激活\方式           2：激活到2099年补丁\ja-netfilter-all\vmoptions\datagrip.vmoptions DATASPELL_V       M_OPTIONS:E:\BaiduNetdiskDownload\JetBrains 2022 最新版本全家桶激活\方式2：激活到2099年补丁\ja-netfilter-all\vmo            ptions\dataspell.vmoptions DriverData:C:\Windows\System32\Drivers\DriverData FPS_BROWSER_APP_PROFILE_STRING:Internet Explorer FPS_BROWSER_USER_PROFILE_STRING:Default GATEWAY_VM_OPTIONS:E:\BaiduNetdiskDownload\JetBrains 2022 最新版本     全家桶激活\方式2：激活到2099年补丁\ja-netfilter-all\vmoptions\gateway.vmopti              ons GCCGO:gccgo GO111MODULE:on GOAMD64:v1 GOARCH:amd64 GOCACHE:C:\Users\NST\AppData\Local\go-build GOENV:C:\Users\NST\AppData\Roaming\go\env GOEXE:.exe GOHOSTARCH:amd64 GOHOSTOS:windows GOLAND_VM_OPTIONS:E:\BaiduNetdiskDownload\JetBrains 2022 最新版本全家桶激活\方式2：激活到2099年补丁\ja-netfilter-all\v                  moptions\goland.vmoptions GOMODCACHE:E:\WORK\SOFT\go1.18.windows-amd64\go\pkg\mod GOOS:windows GOPATH:E:\WORK\SOFT\go1.18.windows-amd64\go GOPROXY:https://goproxy.cn,direct GOROOT:E:\WORK\SOFT\go1.18.windows-amd64\go GOSUMDB:sum.golang.org GOTOOLDIR:E:\WORK\SOFT\go1.18.windows-amd64\go\pkg\tool\windows_amd64 GOVERSION:go1.18 GoLand:E:\WORK\SOFT\JetBrains\GoLand 2021.3.3\bin; HOMEDRIVE:C: HOMEPATH:\Users\NST IDEA_INITIAL_DIRECTORY:C:\WINDOWS\System32 IDEA_VM_OPTIONS:E:\BaiduNetdiskDownload\JetBrains 2022 最新版    本全家桶激活\方式2：激活到2099年补丁\ja-netfilter-all\vmoptions\idea.vmoptio               ns JAVA_HOME:E:\WORK\SOFT\JDK8-64 JETBRAINSCLIENT_VM_OPTIONS:E:\BaiduNetdiskDownload\JetBrains 2022 最新版本全家桶激活\方式2：激活到2099年补丁\ja-netfilt                  er-all\vmoptions\jetbrainsclient.vmoptions JETBRAINS_CLIENT_VM_OPTIONS:E:\BaiduNetdiskDownload\JetBrains 2022 最新版本全家桶激活\方式2：激活到2099年补丁\j                  a-netfilter-all\vmoptions\jetbrains_client.vmoptions LOCALAPPDATA:C:\Users\NST\AppData\Local LOGONSERVER:\\NST-PC MAVEN_HOME:E:\WORK\SOFT\maven-3.6.1 MONGO_HOME:E:\WORK\SOFT\mongodb-win32-x86_64-windows-5.0.3\ MOZ_PLUGIN_PATH:D:\Program Files (x86)\Foxit Software\Foxit PhantomPDF\plugins\ NPM_PREFIX:E:\WORK\SOFT\nodejs\node_global NUMBER_OF_PROCESSORS:8 OS:Windows_NT OneDrive:C:\Use
-[19:11:28 CST 2022/04/09 677] [INFO][test] (github.com/gohutool/boot4go.TestContextConfiguration:120) YAML mysql-snapshot
-
+[21:40:01 CST 2022/04/09 423] [INFO][boot4go.context.test] (github.com/gohutool/boot4go.TestGetBean:117) mysql-snapshot
+[21:40:01 CST 2022/04/09 423] [INFO][boot4go.context.test] (github.com/gohutool/boot4go.TestGetBean:120) [* *.json]
 ```
 
-- Autowire
+- Test autofilled properties with Test struct autowired
+
 ```
-func init() {
-	log4go.LoggerManager.InitWithDefaultConfig()
-	Context.RegistryBeanInstance("aaa", Hello{})
-	Context.RegistryBeanInstance("boot4go.IHello", Hello{})
+func TestGetBean(t *testing.T) {
+	bean, _ := Context.GetBean(Test{})
+
+	logger.Info("%v", &t1.data)
+	logger.Info("%v", &t1.list)
+	logger.Info("%v", &t1.age)
+	logger.Info("%v", &t1.name)
+	logger.Info("%v", &t1.version)		
+}
+```
+
+- Output
+```
+[21:40:01 CST 2022/04/09 424] [INFO][boot4go.context.test] (github.com/gohutool/boot4go.TestGetBean:129) &map[rule1:RunAsAny1 rule2:RunAsAny2 rule3:RunAsAny3]
+[21:40:01 CST 2022/04/09 424] [INFO][boot4go.context.test] (github.com/gohutool/boot4go.TestGetBean:130) &[* *.json]
+[21:40:01 CST 2022/04/09 424] [INFO][boot4go.context.test] (github.com/gohutool/boot4go.TestGetBean:130) 1
+[21:40:01 CST 2022/04/09 424] [INFO][boot4go.context.test] (github.com/gohutool/boot4go.TestGetBean:130) mysql-snapshot
+[21:40:01 CST 2022/04/09 424] [INFO][boot4go.context.test] (github.com/gohutool/boot4go.TestGetBean:130) v1.0.1
+```
+
+- Autowire with nested struct
+
+```
+type Test struct {
+	hello   IHello         `bootable:"aaa"`
+	hello2  Hello2         `bootable`
+	data    map[string]any `bootable:"${spec.runAsUser}"`
+	list    []any          `bootable:"${spec.volumes}"`
 }
 
+func (t *Test) sayHello2(w string) string {
+	return t.hello2.sayHello(w)
+}
 
+func (t *Test) sayHello(w string) string {
+	return t.hello.sayHello(w)
+}
 
+type IHello interface {
+	sayHello(t string) string
+}
+
+type Hello struct {
+	tag string `bootable:"${tag.hello}"`
+}
+
+type Hello2 struct {
+	tag string `bootable:"${tag.hello2}"`
+}
+
+func (h *Hello) sayHello(t string) string {
+	return "Hello " + h.tag + " : " + t
+}
+
+func (h *Hello2) sayHello(t string) string {
+	return "Hello2 " + h.tag + " : " + t
+}
+
+```
+
+- Code
+
+```
 func TestGetBean(t *testing.T) {
-	bean, ok := Context.GetBean(Test{})
+    // Autowired Bean
+	bean, _ := Context.GetBean(Test{})
 
 	t1 := bean.(*Test)
-	logger.Info(&t1.hello2, "  ", &t1.hello)
-
-	bean, _ = Context.getBeanByName("boot4go.Test")
-	t1 = bean.(*Test)
-	logger.Info(&t1.hello2, "  ", &t1.hello)
-
-	logger.Info(reflect.TypeOf(bean.(*Test)).String(), ok)
-	logger.Info(bean)
-
-	logger.Info(&t1.data)
-	logger.Info(&t1.list)
-
-	time.Sleep(10 * time.Second)
+	logger.Info(t1.hello)
+	logger.Info("Hello2=" + t1.sayHello2("AAA"))
+	logger.Info("Hello=" + t1.sayHello("AAA"))
 }
 ```
 
 - Output
 ```
 === RUN   TestGetBean
-[20:53:36 CST 2022/04/09 427] [INFO][boot4go.context.test] (github.com/gohutool/boot4go.TestGetBean:100) 0xc000143b58    0xc000143b48
-[20:53:36 CST 2022/04/09 427] [INFO][boot4go.context.test] (github.com/gohutool/boot4go.TestGetBean:107) &{1 mysql-snapshot v1.0.1 0x8548d8 0x8548d8 map[rule1:RunAsAny1 rule2:RunAsAny2 rule3:RunAsAny3] [* *.json]}
-[20:53:36 CST 2022/04/09 427] [INFO][boot4go.context.test] (github.com/gohutool/boot4go.TestGetBean:104) 0xc000143b58    0xc000143b48
-[20:53:36 CST 2022/04/09 427] [INFO][boot4go.context.test] (github.com/gohutool/boot4go.TestGetBean:110) &[* *.json]
-[20:53:36 CST 2022/04/09 427] [INFO][boot4go.context.test] (github.com/gohutool/boot4go.TestGetBean:109) &map[rule1:RunAsAny1 rule2:RunAsAny2 rule3:RunAsAny3]
-[20:53:36 CST 2022/04/09 427] [INFO][boot4go.context.test] (github.com/gohutool/boot4go.TestGetBean:106) *boot4go.Test <nil>
-
+[21:40:01 CST 2022/04/09 423] [INFO][boot4go.context.test] (github.com/gohutool/boot4go.TestGetBean:117) 0xc00013bbb8
+[21:40:01 CST 2022/04/09 423] [INFO][boot4go.context.test] (github.com/gohutool/boot4go.TestGetBean:118) Hello2=Hello2 TAG-HELLO-B : AAA
+[21:40:01 CST 2022/04/09 424] [INFO][boot4go.context.test] (github.com/gohutool/boot4go.TestGetBean:126) Hello=Hello TAG-HELLO-A : AAA
 --- PASS: TestGetBean (10.00s)
 PASS
 
