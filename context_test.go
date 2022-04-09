@@ -23,20 +23,22 @@ import (
 func init() {
 	log4go.LoggerManager.InitWithDefaultConfig()
 
-	Context.registryBeanInstance("aaa", Hello{})
+	Context.RegistryBeanInstance("aaa", Hello{})
 
-	Context.registryBeanInstance("boot4go.IHello", Hello{})
+	Context.RegistryBeanInstance("boot4go.IHello", Hello{})
 	/*
 		h := &Hello{}
 		Test{hello2: h.(IHello)}*/
 }
 
 type Test struct {
-	age     int16  `bootable:"${metadata.major}"`
-	name    string `bootable:"${metadata.name}"`
-	version string `bootable:"${metadata.version}"`
-	hello   IHello `bootable:"aaa"`
-	hello2  IHello `bootable`
+	age     int16          `bootable:"${metadata.major}"`
+	name    string         `bootable:"${metadata.name}"`
+	version string         `bootable:"${metadata.version}"`
+	hello   IHello         `bootable:"aaa"`
+	hello2  IHello         `bootable`
+	data    map[string]any `bootable:"${spec.runAsUser}"`
+	list    []any          `bootable:"${spec.volumes}"`
 }
 
 type Hello struct {
@@ -92,7 +94,7 @@ func TestContext2(t *testing.T) {
 }
 
 func TestGetBean(t *testing.T) {
-	bean, ok := Context.getBean(Test{})
+	bean, ok := Context.GetBean(Test{})
 
 	t1 := bean.(*Test)
 	fmt.Println(&t1.hello2, "  ", &t1.hello)
@@ -102,11 +104,13 @@ func TestGetBean(t *testing.T) {
 	fmt.Println(&t1.hello2, "  ", &t1.hello)
 
 	fmt.Println(reflect.TypeOf(bean.(*Test)).String(), bean, ok)
+
+	fmt.Println(&t1.data, "  ", &t1.list)
 }
 
 func TestContextConfiguration(t *testing.T) {
 	//Context.type2Str(&Test{})
-	bean, ok := Context.getBean(&Test{})
+	bean, ok := Context.GetBean(&Test{})
 	fmt.Println(reflect.TypeOf(bean.(*Test)).String(), bean, ok)
 
 	logger := log4go.LoggerManager.GetLogger("test")

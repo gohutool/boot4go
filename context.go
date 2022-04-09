@@ -41,12 +41,19 @@ type context struct {
 	pooled     map[string]any
 }
 
-func (c *context) RegistryBean(name string, t reflect.Type) {
-	c.lock.RLock()
-	defer c.lock.RUnlock()
+func (c *context) RegistryBean(name string, t reflect.Type) (any, error) {
+	i, err := c.getBeanByType(t)
+
+	if err != nil {
+		return nil, err
+	}
+
+	c.RegistryBeanInstance(name, i)
+
+	return i, nil
 }
 
-func (c *context) registryBeanInstance(name string, i any) {
+func (c *context) RegistryBeanInstance(name string, i any) {
 	c.lock.RLock()
 	defer c.lock.RUnlock()
 
@@ -58,17 +65,42 @@ func (c *context) registryBeanInstance(name string, i any) {
 	} else if t.Kind() == reflect.Ptr {
 		c.pooled[name] = i
 	}
-
 }
 
-func (c *context) getBeanByName(name string) (any, bool) {
+func (c *context) GetBean(param any) (any, error) {
+
+	if str, isStr := param.(string); isStr {
+		return c.getBeanByName(str)
+	}
+
+	if pt, isType := param.(reflect.Type); isType {
+		return c.getBeanByType(pt)
+	}
+
+	return c.getBeanByInstance(param)
+}
+
+func (c *context) getBeanByName(name string) (any, error) {
 	v, ok := c.pooled[name]
 
-	return v, ok
+	if ok {
+		return v, nil
+	} else {
+		return nil, errors.New("Not found " + name)
+	}
+
 }
 
-func (c *context) getBean(obj any) (any, error) {
-	t := reflect.TypeOf(obj)
+// Combine type and any
+func (c *context) getBeanByInstance(instance any) (any, error) {
+	t := reflect.TypeOf(instance)
+
+	return c.getBeanByType(t)
+}
+
+// Combine type and any
+func (c *context) getBeanByType(t reflect.Type) (any, error) {
+	//t := reflect.TypeOf(obj)
 	beanName, _ := type2Str(t)
 	//
 	//c.lock.RLock()
@@ -106,8 +138,12 @@ func (c *context) getBean(obj any) (any, error) {
 			if tag := f.Tag.Get("bootable"); len(tag) > 0 {
 				v = ConfigurationContext.GetValue(tag)
 				if v != nil {
-					s := fmt.Sprintf("%v", v)
-					v, _ = str2Object(s, k)
+					if k == reflect.Map || k == reflect.Array || k == reflect.Slice {
+
+					} else {
+						s := fmt.Sprintf("%v", v)
+						v, _ = str2Object(s, k)
+					}
 				}
 			}
 		} else {
@@ -160,7 +196,7 @@ func (c *context) getBean(obj any) (any, error) {
 	//	//fmt.Println(f.Name, " ", a, " ", ok)
 	//}
 
-	c.registryBeanInstance(beanName, newValue.Interface())
+	c.RegistryBeanInstance(beanName, newValue.Interface())
 
 	return newValue.Interface(), nil
 	/*

@@ -14,7 +14,9 @@ spec:
   hostIPC: false
   hostPID: false
   runAsUser:
-    rule: RunAsAny
+    rule1: RunAsAny1
+    rule2: RunAsAny2
+    rule3: RunAsAny3
   seLinux:
     rule: RunAsAny
   supplementalGroups:
