@@ -22,12 +22,28 @@ import (
 
 func init() {
 	log4go.LoggerManager.InitWithDefaultConfig()
+
+	Context.registryBeanInstance("aaa", Hello{})
+
+	Context.registryBeanInstance("boot4go.IHello", Hello{})
+	/*
+		h := &Hello{}
+		Test{hello2: h.(IHello)}*/
 }
 
 type Test struct {
-	age   int    `bootable:"${data.age}"`
-	name  string `bootable:"${data.name}"`
-	hello IHello `bootable:`
+	age     int16  `bootable:"${metadata.major}"`
+	name    string `bootable:"${metadata.name}"`
+	version string `bootable:"${metadata.version}"`
+	hello   IHello `bootable:"aaa"`
+	hello2  IHello `bootable`
+}
+
+type Hello struct {
+}
+
+func (h *Hello) sayHello(t Test) Test {
+	return Test{}
 }
 
 type IHello interface {
@@ -77,6 +93,13 @@ func TestContext2(t *testing.T) {
 
 func TestGetBean(t *testing.T) {
 	bean, ok := Context.getBean(Test{})
+
+	t1 := bean.(*Test)
+	fmt.Println(&t1.hello2, "  ", &t1.hello)
+
+	bean, _ = Context.getBeanByName("boot4go.Test")
+	t1 = bean.(*Test)
+	fmt.Println(&t1.hello2, "  ", &t1.hello)
 
 	fmt.Println(reflect.TypeOf(bean.(*Test)).String(), bean, ok)
 }

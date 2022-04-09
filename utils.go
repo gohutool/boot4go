@@ -1,5 +1,11 @@
 package boot4go
 
+import (
+	"fmt"
+	"reflect"
+	"strconv"
+)
+
 /**
 * golang-sample源代码，版权归锦翰科技（深圳）有限公司所有。
 * <p>
@@ -24,4 +30,147 @@ func Substring(source string, start int, end int) string {
 	}
 
 	return string(r[start:end])
+}
+
+func Str2Int64(source string) (any, error) {
+	v, error := strconv.ParseInt(fmt.Sprintf("%v", source), 10, 64)
+	if error == nil {
+		return int64(v), nil
+	}
+	return nil, error
+}
+
+func Str2Int32(source string) (any, error) {
+	v, error := strconv.ParseInt(fmt.Sprintf("%v", source), 10, 64)
+	if error == nil {
+		return int32(v), nil
+	}
+	return nil, error
+}
+
+func Str2Int16(source string) (any, error) {
+	v, error := strconv.ParseInt(fmt.Sprintf("%v", source), 10, 64)
+	if error == nil {
+		return int16(v), nil
+	}
+	return nil, error
+}
+
+func Str2Int8(source string) (any, error) {
+	v, error := strconv.ParseInt(fmt.Sprintf("%v", source), 10, 64)
+	if error == nil {
+		return int8(v), nil
+	}
+	return nil, error
+}
+
+func Str2Int(source string) (any, error) {
+	v, error := strconv.Atoi(fmt.Sprintf("%v", source))
+	if error == nil {
+		return v, nil
+	}
+	return nil, error
+}
+
+func Str2UInt64(source string) (any, error) {
+	v, error := strconv.ParseUint(fmt.Sprintf("%v", source), 10, 64)
+	if error == nil {
+		return uint64(v), nil
+	}
+	return nil, error
+}
+
+func Str2Uint32(source string) (any, error) {
+	v, error := strconv.ParseUint(fmt.Sprintf("%v", source), 10, 64)
+	if error == nil {
+		return uint32(v), nil
+	}
+	return nil, error
+}
+
+func Str2Uint16(source string) (any, error) {
+	v, error := strconv.ParseUint(fmt.Sprintf("%v", source), 10, 64)
+	if error == nil {
+		return uint16(v), nil
+	}
+	return nil, error
+}
+
+func Str2Uint8(source string) (any, error) {
+	v, error := strconv.ParseUint(fmt.Sprintf("%v", source), 10, 64)
+	if error == nil {
+		return uint8(v), nil
+	}
+	return nil, error
+}
+
+func Str2Uint(source string) (any, error) {
+	v, error := strconv.ParseUint(fmt.Sprintf("%v", source), 10, 64)
+	if error == nil {
+		return uint(v), nil
+	}
+	return nil, error
+}
+
+func Str2Bool(source string) (any, error) {
+	v, error := strconv.ParseBool(fmt.Sprintf("%v", source))
+	if error == nil {
+		return v, nil
+	}
+	return nil, error
+}
+
+func Str2Float64(source string) (any, error) {
+	v, error := strconv.ParseFloat(fmt.Sprintf("%v", source), 10)
+	if error == nil {
+		return v, nil
+	}
+	return nil, error
+}
+
+func Str2Float32(source string) (any, error) {
+	v, error := strconv.ParseFloat(fmt.Sprintf("%v", source), 10)
+	if error == nil {
+		return float32(v), nil
+	}
+	return nil, error
+}
+
+func str2Object(v string, k reflect.Kind) (any, error) {
+	if len(v) == 0 {
+		return nil, nil
+	}
+
+	switch k {
+	case reflect.String:
+		return v, nil
+	case reflect.Int:
+		return Str2Int(v)
+	case reflect.Int16:
+		return Str2Int16(v)
+	case reflect.Int32:
+		return Str2Int32(v)
+	case reflect.Int64:
+		return Str2Int64(v)
+	case reflect.Int8:
+		return Str2Int8(v)
+	case reflect.Uint:
+		return Str2Uint(v)
+	case reflect.Uint8:
+		return Str2Uint8(v)
+	case reflect.Uint16:
+		return Str2Uint16(v)
+	case reflect.Uint32:
+		return Str2Uint32(v)
+	case reflect.Uint64:
+		return Str2UInt64(v)
+	case reflect.Bool:
+		return Str2Bool(v)
+	case reflect.Float32:
+		return Str2Float32(v)
+	case reflect.Float64:
+		return Str2Float64(v)
+	}
+
+	return nil, nil
 }

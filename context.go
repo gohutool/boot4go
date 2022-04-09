@@ -41,16 +41,30 @@ type context struct {
 	pooled     map[string]any
 }
 
-func (c *context) RegistryBean(t reflect.Type, name string) {
+func (c *context) RegistryBean(name string, t reflect.Type) {
 	c.lock.RLock()
 	defer c.lock.RUnlock()
 }
 
-func (c *context) registryBeanInstance(i any, name string) {
+func (c *context) registryBeanInstance(name string, i any) {
 	c.lock.RLock()
 	defer c.lock.RUnlock()
 
-	c.pooled[name] = i
+	t := reflect.TypeOf(i)
+
+	if t.Kind() == reflect.Struct || t.Kind() == reflect.Interface {
+		v := reflect.New(t).Interface()
+		c.pooled[name] = v
+	} else if t.Kind() == reflect.Ptr {
+		c.pooled[name] = i
+	}
+
+}
+
+func (c *context) getBeanByName(name string) (any, bool) {
+	v, ok := c.pooled[name]
+
+	return v, ok
 }
 
 func (c *context) getBean(obj any) (any, error) {
@@ -81,19 +95,43 @@ func (c *context) getBean(obj any) (any, error) {
 	count := t.NumField()
 	for idx := 0; idx < count; idx++ {
 		f := t.Field(idx)
-		fmt.Printf("============= %+v \n", f.Tag)
 		newFieldValue := newValue.Elem().FieldByName(f.Name)
 
 		var v any
+		k := f.Type.Kind()
 
-		if newFieldValue.Kind() == reflect.String {
-			v = "David.Liu"
-		} else if newFieldValue.Kind() == reflect.Int {
-			v = 1022
+		fmt.Println(k, "\t\t", f.Type.String())
+
+		if k != reflect.Interface && k != reflect.Struct && k != reflect.Ptr {
+			if tag := f.Tag.Get("bootable"); len(tag) > 0 {
+				v = ConfigurationContext.GetValue(tag)
+				if v != nil {
+					s := fmt.Sprintf("%v", v)
+					v, _ = str2Object(s, k)
+				}
+			}
+		} else {
+			bn := f.Tag.Get("bootable")
+			if len(bn) == 0 {
+				if k == reflect.Ptr {
+					newFieldValue = reflect.New(f.Type.Elem())
+					bn = newFieldValue.Elem().Type().String()
+				} else {
+					bn = newFieldValue.Type().String()
+				}
+			}
+
+			if b, _ := c.pooled[bn]; b != nil {
+				v = b
+			}
 		}
 
 		if v != nil {
-			reflect.NewAt(newFieldValue.Type(), unsafe.Pointer(newFieldValue.UnsafeAddr())).Elem().Set(reflect.ValueOf(v))
+			if k == reflect.Ptr {
+				reflect.NewAt(newFieldValue.Type(), unsafe.Pointer(newFieldValue.UnsafeAddr())).Elem().Set(reflect.ValueOf(v))
+			} else {
+				reflect.NewAt(newFieldValue.Type(), unsafe.Pointer(newFieldValue.UnsafeAddr())).Elem().Set(reflect.ValueOf(v))
+			}
 		}
 
 	}
@@ -122,7 +160,7 @@ func (c *context) getBean(obj any) (any, error) {
 	//	//fmt.Println(f.Name, " ", a, " ", ok)
 	//}
 
-	c.registryBeanInstance(bean, beanName)
+	c.registryBeanInstance(beanName, newValue.Interface())
 
 	return newValue.Interface(), nil
 	/*
