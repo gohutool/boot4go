@@ -118,6 +118,10 @@ func (c *context) getBeanByType(t reflect.Type) (any, error) {
 	if t.Kind() == reflect.Struct {
 		newValue = reflect.New(t)
 	} else {
+		if t.Kind() == reflect.Interface {
+			return nil, errors.New(t.String() + " is an interface, It can not be instance")
+		}
+
 		newValue = reflect.New(t.Elem())
 	}
 

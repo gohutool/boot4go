@@ -13,8 +13,8 @@ package boot4go
 */
 
 const (
-	L4G_VERSION = "boot4go-v1.0.0"
-	L4G_MAJOR   = 1
-	L4G_MINOR   = 0
-	L4G_BUILD   = 0
+	BOOT4G_VERSION = "boot4go-v1.0.0"
+	BOOT4G_MAJOR   = 1
+	BOOT4G_MINOR   = 0
+	BOOT4G_BUILD   = 0
 )
