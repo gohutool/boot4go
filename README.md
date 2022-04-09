@@ -1,4 +1,4 @@
-# Go Boot
+# Boot4go
 
 *a framework to start a web application quickly like as spring-boot*
 
@@ -21,6 +21,15 @@ Our primary goals are:
 - Absolutely no code generation and no requirement for XML configuration.
 
 ## Installation and Getting Started
+
+- Import
+```
+import (
+	"fmt"
+	"github.com/gohutool/log4go"
+	"github.com/gohutool/boot4go"
+)
+```
 
 The reference documentation includes detailed installation instructions as well as a comprehensive getting started guide.
 
