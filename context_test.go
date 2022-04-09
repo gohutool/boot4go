@@ -25,9 +25,9 @@ func init() {
 }
 
 type Test struct {
-	age   int
-	name  string
-	hello IHello
+	age   int    `bootable:"${data.age}"`
+	name  string `bootable:"${data.name}"`
+	hello IHello `bootable:`
 }
 
 type IHello interface {
@@ -76,12 +76,13 @@ func TestContext2(t *testing.T) {
 }
 
 func TestGetBean(t *testing.T) {
-	bean, ok := Context.getBean(&Test{})
+	bean, ok := Context.getBean(Test{})
 
 	fmt.Println(reflect.TypeOf(bean.(*Test)).String(), bean, ok)
 }
 
 func TestContextConfiguration(t *testing.T) {
+	//Context.type2Str(&Test{})
 	bean, ok := Context.getBean(&Test{})
 	fmt.Println(reflect.TypeOf(bean.(*Test)).String(), bean, ok)
 

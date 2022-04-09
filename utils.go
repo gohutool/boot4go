@@ -3,7 +3,7 @@ package boot4go
 /**
 * golang-sample源代码，版权归锦翰科技（深圳）有限公司所有。
 * <p>
-* 文件名称 : util.go
+* 文件名称 : utils.go
 * 文件路径 :
 * 作者 : DavidLiu
 × Email: david.liu@ginghan.com

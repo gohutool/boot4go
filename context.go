@@ -2,9 +2,11 @@ package boot4go
 
 import (
 	"errors"
+	"fmt"
 	"github.com/gohutool/log4go"
 	"reflect"
 	"sync"
+	"unsafe"
 )
 
 /**
@@ -64,27 +66,72 @@ func (c *context) getBean(obj any) (any, error) {
 		return bean, nil
 	}
 
+	var newValue reflect.Value
+
+	// get new Object pointer of source Type
 	if t.Kind() == reflect.Struct {
-		bean = reflect.New(t).Interface()
+		newValue = reflect.New(t)
 	} else {
-		bean = reflect.New(t.Elem()).Interface()
+		newValue = reflect.New(t.Elem())
 	}
 
-	/*
-		count := t.NumField()
-		for idx := 0; idx < count; idx++ {
-			a, ok := type2Str(t.Field(idx).Type)
-			fmt.Println(t.Field(idx).Name, " ", a, " ", ok)
-		}*/
+	// get the Type of struct
+	t = reflect.TypeOf(newValue.Elem().Interface())
+	fmt.Println(t.NumField())
+	count := t.NumField()
+	for idx := 0; idx < count; idx++ {
+		f := t.Field(idx)
+		fmt.Printf("============= %+v \n", f.Tag)
+		newFieldValue := newValue.Elem().FieldByName(f.Name)
+
+		var v any
+
+		if newFieldValue.Kind() == reflect.String {
+			v = "David.Liu"
+		} else if newFieldValue.Kind() == reflect.Int {
+			v = 1022
+		}
+
+		if v != nil {
+			reflect.NewAt(newFieldValue.Type(), unsafe.Pointer(newFieldValue.UnsafeAddr())).Elem().Set(reflect.ValueOf(v))
+		}
+
+	}
+
+	//
+	//v := reflect.ValueOf(bean).Elem()
+	//
+	//count := t.NumField()
+	//for idx := 0; idx < count; idx++ {
+	//	fv := v.Field(idx)
+	//	ft := fv.Type()
+	//	f := t.Field(idx)
+	//	fmt.Println(f.Name, "==========", ft.Kind())
+	//
+	//	if f.IsExported() {
+	//
+	//		if fv.Kind() == reflect.Int {
+	//			fv.SetInt(20)
+	//		} else if fv.Kind() == reflect.String {
+	//			fv.SetString("DavidLiu")
+	//		}
+	//	}
+	//
+	//	//fV := reflect.ValueOf(bean).Elem().Field(idx)
+	//	//a, ok := type2Str(fv.Elem().Type())
+	//	//fmt.Println(f.Name, " ", a, " ", ok)
+	//}
 
 	c.registryBeanInstance(bean, beanName)
 
-	if t.Kind() == reflect.Struct {
-		return bean, nil
-	} else {
-		return bean, nil
-	}
-
+	return newValue.Interface(), nil
+	/*
+		if t.Kind() == reflect.Struct {
+			return bean, nil
+		} else {
+			return bean, nil
+		}
+	*/
 }
 
 func (c *context) resolveBean(name string) (any, error) {
@@ -100,7 +147,6 @@ func (c *context) resolveBean(name string) (any, error) {
 }
 
 // utils
-
 func type2Str(t reflect.Type) (string, error) {
 	if t.Kind() == reflect.Struct || t.Kind() == reflect.Interface {
 		return t.String(), nil
@@ -108,5 +154,5 @@ func type2Str(t reflect.Type) (string, error) {
 		return t.Elem().String(), nil
 	}
 
-	return "", errors.New(t.String() + " is not struct or interface")
+	return t.String(), errors.New(t.String() + " is not struct or interface")
 }
