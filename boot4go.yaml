@@ -4,6 +4,9 @@ metadata:
   name: mysql-snapshot
   version: v1.0.1
   major: 1
+tag:
+  hello: TAG-HELLO-A
+  hello2: TAG-HELLO-B
 spec:
   privileged: false
   allowPrivilegeEscalation: false

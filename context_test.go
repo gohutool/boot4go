@@ -25,9 +25,9 @@ var logger log4go.Logger
 func init() {
 	log4go.LoggerManager.InitWithDefaultConfig()
 
-	Context.RegistryBeanInstance("aaa", Hello{})
-
-	Context.RegistryBeanInstance("boot4go.IHello", Hello{})
+	d, _ := Context.RegistryBean("aaa", Hello{})
+	fmt.Println(d)
+	//Context.RegistryBeanInstance("boot4go.IHello", d)
 	/*
 		h := &Hello{}
 		Test{hello2: h.(IHello)}*/
@@ -40,20 +40,37 @@ type Test struct {
 	name    string         `bootable:"${metadata.name}"`
 	version string         `bootable:"${metadata.version}"`
 	hello   IHello         `bootable:"aaa"`
-	hello2  IHello         `bootable`
+	hello2  Hello2         `bootable`
 	data    map[string]any `bootable:"${spec.runAsUser}"`
 	list    []any          `bootable:"${spec.volumes}"`
 }
 
-type Hello struct {
+func (t *Test) sayHello2(w string) string {
+	return t.hello2.sayHello(w)
 }
 
-func (h *Hello) sayHello(t Test) Test {
-	return Test{}
+func (t *Test) sayHello(w string) string {
+	return t.hello.sayHello(w)
+}
+
+type Hello2 struct {
+	tag string `bootable:"${tag.hello2}"`
+}
+
+func (h *Hello2) sayHello(t string) string {
+	return "Hello2 " + h.tag + " : " + t
+}
+
+type Hello struct {
+	tag string `bootable:"${tag.hello}"`
+}
+
+func (h *Hello) sayHello(t string) string {
+	return "Hello " + h.tag + " : " + t
 }
 
 type IHello interface {
-	sayHello(t Test) Test
+	sayHello(t string) string
 }
 
 func TestContext(t *testing.T) {
@@ -77,9 +94,9 @@ func TestContext(t *testing.T) {
 	fmt.Println(type2Str(reflect.TypeOf(h)))
 	fmt.Println(type2Str(reflect.TypeOf(ih)))
 
-	fmt.Println(IHello.sayHello(ih, *test))
+	fmt.Println(IHello.sayHello(ih, "boot4go"))
 
-	h.sayHello(*test)
+	h.sayHello("boot4go")
 }
 
 func TestContext2(t *testing.T) {
@@ -94,20 +111,27 @@ func TestContext2(t *testing.T) {
 }
 
 func TestGetBean(t *testing.T) {
-	bean, ok := Context.GetBean(Test{})
+	bean, _ := Context.GetBean(Test{})
 
 	t1 := bean.(*Test)
-	logger.Info(&t1.hello2, "  ", &t1.hello)
+	logger.Info(&t1.hello)
+	logger.Info("Hello2=" + t1.sayHello2("AAA"))
+	logger.Info("Hello=" + t1.sayHello("AAA"))
+	logger.Info("%v", &t1.hello)
 
 	bean, _ = Context.getBeanByName("boot4go.Test")
 	t1 = bean.(*Test)
-	logger.Info(&t1.hello2, "  ", &t1.hello)
-
-	logger.Info("%v %v", reflect.TypeOf(bean.(*Test)).String(), ok)
-	logger.Info(bean)
+	logger.Info(&t1.hello)
+	logger.Info("Hello2=" + t1.sayHello2("BBB"))
+	logger.Info("Hello=" + t1.sayHello("BBB"))
+	logger.Info("%v", &t1.hello)
 
 	logger.Info("%v", &t1.data)
 	logger.Info("%v", &t1.list)
+
+	bean, _ = Context.getBeanByName("boot4go.Hello2")
+	h2 := bean.(*Hello2)
+	logger.Info("%s", h2.sayHello("CCC"))
 
 	time.Sleep(10 * time.Second)
 }

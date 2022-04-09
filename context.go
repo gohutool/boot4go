@@ -41,8 +41,8 @@ type context struct {
 	pooled     map[string]any
 }
 
-func (c *context) RegistryBean(name string, t reflect.Type) (any, error) {
-	i, err := c.getBeanByType(t)
+func (c *context) RegistryBean(name string, beanType any) (any, error) {
+	i, err := c.GetBean(beanType)
 
 	if err != nil {
 		return nil, err
@@ -178,6 +178,8 @@ func (c *context) getBeanByType(t reflect.Type) (any, error) {
 		if v != nil {
 			if k == reflect.Ptr {
 				reflect.NewAt(newFieldValue.Type(), unsafe.Pointer(newFieldValue.UnsafeAddr())).Elem().Set(reflect.ValueOf(v))
+			} else if k == reflect.Struct {
+				reflect.NewAt(newFieldValue.Type(), unsafe.Pointer(newFieldValue.UnsafeAddr())).Elem().Set(reflect.ValueOf(v).Elem())
 			} else {
 				reflect.NewAt(newFieldValue.Type(), unsafe.Pointer(newFieldValue.UnsafeAddr())).Elem().Set(reflect.ValueOf(v))
 			}
