@@ -169,6 +169,12 @@ func (h *Hello2) sayHello(t string) string {
 - Code
 
 ```
+func init() {
+	log4go.LoggerManager.InitWithDefaultConfig()
+	d, _ := Context.RegistryBean("aaa", Hello{})
+	logger = log4go.LoggerManager.GetLogger("boot4go.context.test")
+}
+
 func TestGetBean(t *testing.T) {
     // Autowired Bean
 	bean, _ := Context.GetBean(Test{})
