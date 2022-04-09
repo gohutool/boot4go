@@ -96,38 +96,42 @@ func init() {
 }
 
 
+
 func TestGetBean(t *testing.T) {
 	bean, ok := Context.GetBean(Test{})
 
 	t1 := bean.(*Test)
-	fmt.Println(&t1.hello2, "  ", &t1.hello)
+	logger.Info(&t1.hello2, "  ", &t1.hello)
 
 	bean, _ = Context.getBeanByName("boot4go.Test")
 	t1 = bean.(*Test)
-	fmt.Println(&t1.hello2, "  ", &t1.hello)
+	logger.Info(&t1.hello2, "  ", &t1.hello)
 
-	fmt.Println(reflect.TypeOf(bean.(*Test)).String(), bean, ok)
+	logger.Info(reflect.TypeOf(bean.(*Test)).String(), ok)
+	logger.Info(bean)
 
-	fmt.Println(&t1.data)
-	fmt.Println(&t1.list)
+	logger.Info(&t1.data)
+	logger.Info(&t1.list)
+
+	time.Sleep(10 * time.Second)
 }
 ```
 
 - Output
 ```
 === RUN   TestGetBean
-0xc000143b58    0xc000143b48
-0xc000143b58    0xc000143b48
-*boot4go.Test &{1 mysql-snapshot v1.0.1 0x4b48d8 0x4b48d8 map[rule1:RunAsAny1 rule2:RunAsAny2 rule3:RunAsAny3] [* *.json]} <nil>
+[20:28:57 CST 2022/04/09 889] [INFO][boot4go.context.test] (github.com/gohutool/boot4go.TestGetBean:100) 0xc000143b58    0xc000143b48
+[20:28:57 CST 2022/04/09 889] [INFO][boot4go.context.test] (github.com/gohutool/boot4go.TestGetBean:104) 0xc000143b58    0xc000143b48
+[20:28:57 CST 2022/04/09 889] [INFO][boot4go.context.test] (github.com/gohutool/boot4go.TestGetBean:110) &[* *.json]
+[20:28:57 CST 2022/04/09 889] [INFO][boot4go.context.test] (github.com/gohutool/boot4go.TestGetBean:109) &map[rule1:RunAsAny1 rule2:RunAsAny2 rule3:RunAsAny3]
+[20:28:57 CST 2022/04/09 889] [INFO][boot4go.context.test] (github.com/gohutool/boot4go.TestGetBean:107) &{1 mysql-snapshot v1.0.1 0xee48d8 0xee48d8 map[rule1:RunAsAny1 rule2:RunAsAny2 rule3:RunAsAny3] [* *.json]}
+[20:28:57 CST 2022/04/09 889] [INFO][boot4go.context.test] (github.com/gohutool/boot4go.TestGetBean:106) *boot4go.Test%!(EXTRA <nil>)
 
-&map[rule1:RunAsAny1 rule2:RunAsAny2 rule3:RunAsAny3]    
-&[* *.json]
---- PASS: TestGetBean (0.00s)
+--- PASS: TestGetBean (10.00s)
 PASS
 
 
 Debugger finished with the exit code 0
-
 ```
 
 
