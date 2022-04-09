@@ -129,12 +129,12 @@ func TestGetBean(t *testing.T) {
 - Output
 ```
 === RUN   TestGetBean
-[20:28:57 CST 2022/04/09 889] [INFO][boot4go.context.test] (github.com/gohutool/boot4go.TestGetBean:100) 0xc000143b58    0xc000143b48
-[20:28:57 CST 2022/04/09 889] [INFO][boot4go.context.test] (github.com/gohutool/boot4go.TestGetBean:104) 0xc000143b58    0xc000143b48
-[20:28:57 CST 2022/04/09 889] [INFO][boot4go.context.test] (github.com/gohutool/boot4go.TestGetBean:110) &[* *.json]
-[20:28:57 CST 2022/04/09 889] [INFO][boot4go.context.test] (github.com/gohutool/boot4go.TestGetBean:109) &map[rule1:RunAsAny1 rule2:RunAsAny2 rule3:RunAsAny3]
-[20:28:57 CST 2022/04/09 889] [INFO][boot4go.context.test] (github.com/gohutool/boot4go.TestGetBean:107) &{1 mysql-snapshot v1.0.1 0xee48d8 0xee48d8 map[rule1:RunAsAny1 rule2:RunAsAny2 rule3:RunAsAny3] [* *.json]}
-[20:28:57 CST 2022/04/09 889] [INFO][boot4go.context.test] (github.com/gohutool/boot4go.TestGetBean:106) *boot4go.Test%!(EXTRA <nil>)
+[20:53:36 CST 2022/04/09 427] [INFO][boot4go.context.test] (github.com/gohutool/boot4go.TestGetBean:100) 0xc000143b58    0xc000143b48
+[20:53:36 CST 2022/04/09 427] [INFO][boot4go.context.test] (github.com/gohutool/boot4go.TestGetBean:107) &{1 mysql-snapshot v1.0.1 0x8548d8 0x8548d8 map[rule1:RunAsAny1 rule2:RunAsAny2 rule3:RunAsAny3] [* *.json]}
+[20:53:36 CST 2022/04/09 427] [INFO][boot4go.context.test] (github.com/gohutool/boot4go.TestGetBean:104) 0xc000143b58    0xc000143b48
+[20:53:36 CST 2022/04/09 427] [INFO][boot4go.context.test] (github.com/gohutool/boot4go.TestGetBean:110) &[* *.json]
+[20:53:36 CST 2022/04/09 427] [INFO][boot4go.context.test] (github.com/gohutool/boot4go.TestGetBean:109) &map[rule1:RunAsAny1 rule2:RunAsAny2 rule3:RunAsAny3]
+[20:53:36 CST 2022/04/09 427] [INFO][boot4go.context.test] (github.com/gohutool/boot4go.TestGetBean:106) *boot4go.Test <nil>
 
 --- PASS: TestGetBean (10.00s)
 PASS

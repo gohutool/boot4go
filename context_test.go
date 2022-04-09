@@ -103,11 +103,11 @@ func TestGetBean(t *testing.T) {
 	t1 = bean.(*Test)
 	logger.Info(&t1.hello2, "  ", &t1.hello)
 
-	logger.Info(reflect.TypeOf(bean.(*Test)).String(), ok)
+	logger.Info("%v %v", reflect.TypeOf(bean.(*Test)).String(), ok)
 	logger.Info(bean)
 
-	logger.Info(&t1.data)
-	logger.Info(&t1.list)
+	logger.Info("%v", &t1.data)
+	logger.Info("%v", &t1.list)
 
 	time.Sleep(10 * time.Second)
 }
