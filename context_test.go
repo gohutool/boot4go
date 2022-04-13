@@ -2,6 +2,7 @@ package boot4go
 
 import (
 	"fmt"
+	"github.com/gohutool/boot4go/configuration"
 	"github.com/gohutool/log4go"
 	"reflect"
 	"testing"
@@ -26,6 +27,8 @@ var bean any
 func init() {
 	log4go.LoggerManager.InitWithDefaultConfig()
 
+	//Context.RegistryBeanHandler()
+
 	d, _ := Context.RegistryBean("aaa", Hello{})
 	fmt.Println(d)
 
@@ -33,19 +36,20 @@ func init() {
 	//Context.RegistryBeanInstance("boot4go.IHello", d)
 	/*
 		h := &Hello{}
-		Test{hello2: h.(IHello)}*/
+		Test{Hello2: h.(IHello)}*/
 
 	logger = log4go.LoggerManager.GetLogger("boot4go.context.test")
 }
 
 type Test struct {
-	age     int16          `bootable:"${metadata.major}"`
-	name    string         `bootable:"${metadata.name}"`
-	version string         `bootable:"${metadata.version}"`
-	hello   IHello         `bootable:"aaa"`
-	hello2  Hello2         `bootable`
-	data    map[string]any `bootable:"${spec.runAsUser}"`
-	list    []any          `bootable:"${spec.volumes}"`
+	age     int16          `@auto:"${metadata.major}"`
+	name    string         `@auto:"${metadata.name}"`
+	version string         `@auto:"${metadata.version}"`
+	hello   IHello         `@auto:"aaa"`
+	Hello2  Hello2         `@auto`
+	hello3  Hello2         `@sample`
+	data    map[string]any `@auto:"${spec.runAsUser}"`
+	list    []any          `@auto:"${spec.volumes}"`
 }
 
 func (t *Test) PostConstruct() {
@@ -53,15 +57,15 @@ func (t *Test) PostConstruct() {
 }
 
 func (t *Test) sayHello2(w string) string {
-	return t.hello2.sayHello(w)
+	return t.Hello2.sayHello(w)
 }
 
 func (t *Test) sayHello(w string) string {
-	return t.hello.sayHello(w)
+	return (t.hello).sayHello(w)
 }
 
 type Hello2 struct {
-	tag string `bootable:"${tag.hello2}"`
+	tag string `@auto:"${tag.hello2}"`
 }
 
 func (h *Hello2) sayHello(t string) string {
@@ -73,7 +77,7 @@ func (t *Hello2) PostConstruct() {
 }
 
 type Hello struct {
-	tag string `bootable:"${tag.hello}"`
+	tag string `@auto:"${tag.hello}"`
 }
 
 func (h *Hello) sayHello(t string) string {
@@ -82,11 +86,23 @@ func (h *Hello) sayHello(t string) string {
 
 func (t *Hello) PostConstruct() {
 	logger.Info("PostConstruct Hello")
-	panic("panic testing")
+	//panic("panic testing")
 }
 
 type IHello interface {
 	sayHello(t string) string
+}
+
+type SampleAutowiredHandler struct {
+}
+
+func (s *SampleAutowiredHandler) BeforeAutowired(meta AutoWiredMeta) any {
+	fmt.Printf("%v %v %v\n", meta.Type, meta.bean, meta.Tag)
+	return meta.bean
+}
+
+func (s *SampleAutowiredHandler) PostAutowired(source any, meta AutoWiredMeta) {
+
 }
 
 func TestContext(t *testing.T) {
@@ -149,10 +165,10 @@ func TestContextConfiguration(t *testing.T) {
 
 	logger := log4go.LoggerManager.GetLogger("test")
 
-	logger.Info("YAML %v", ConfigurationContext.ToMap())
+	logger.Info("YAML %v", configuration.ConfigurationContext.ToMap())
 
-	logger.Info("YAML %v", ConfigurationContext.GetValue("${metadata.name}"))
-	logger.Info("YAML %v", ConfigurationContext.GetValue("${spec.volumes[0]}"))
+	logger.Info("YAML %v", configuration.ConfigurationContext.GetValue("${metadata.name}"))
+	logger.Info("YAML %v", configuration.ConfigurationContext.GetValue("${spec.volumes[0]}"))
 
 	time.Sleep(10 * time.Second)
 }

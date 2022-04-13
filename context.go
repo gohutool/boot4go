@@ -3,6 +3,9 @@ package boot4go
 import (
 	"errors"
 	"fmt"
+	"github.com/gohutool/boot4go/configuration"
+	. "github.com/gohutool/boot4go/reflect"
+	"github.com/gohutool/boot4go/util"
 	"github.com/gohutool/log4go"
 	"os"
 	"reflect"
@@ -28,11 +31,13 @@ var contextLogger = log4go.LoggerManager.GetLogger("boot4go.context")
 func init() {
 	configFile := "boot4go.yaml"
 
-	if ConfigurationContext.IsConfigFileExist(configFile) {
-		ConfigurationContext.LoadYaml(configFile)
+	if configuration.ConfigurationContext.IsConfigFileExist(configFile) {
+		configuration.ConfigurationContext.LoadYaml(configFile)
 	}
 
-	contextLogger.Debug("Yaml %v", ConfigurationContext.ToMap())
+	Context.RegistryAutowiredBeanHandler(new(AutoConfigurationAutowiredBeanHandler))
+
+	contextLogger.Debug("Yaml %v", configuration.ConfigurationContext.ToMap())
 }
 
 var Context = context{processing: make(map[string]any), pooled: make(map[string]any),
@@ -45,8 +50,9 @@ type context struct {
 	handler    map[string]AutowiredBeanHandler
 }
 
-func (c *context) RegistryBeanHandler(name string, handler AutowiredBeanHandler) {
-	if handler, ok := c.handler[strings.ToLower(name)]; ok {
+func (c *context) RegistryAutowiredBeanHandler(handler AutowiredBeanHandler) {
+	name := handler.ID()
+	if _, ok := c.handler[strings.ToLower(name)]; ok {
 		contextLogger.Debug("%v is exist with %v", name, reflect.TypeOf(handler).String())
 	} else {
 		c.handler[name] = handler
@@ -91,6 +97,17 @@ func (c *context) GetBean(param any) (any, error) {
 
 	return c.getBeanByInstance(param)
 }
+
+//func (c *context) GetPooledBean(name string) (any, error) {
+//	v, ok := c.pooled[name]
+//
+//	if ok {
+//		return v, nil
+//	} else {
+//		return nil, errors.New("Not found " + name)
+//	}
+//
+//}
 
 func (c *context) getBeanByName(name string) (any, error) {
 	v, ok := c.pooled[name]
@@ -153,38 +170,86 @@ func (c *context) getBeanByType(t reflect.Type) (any, error) {
 
 		contextLogger.Debug(k, "\t\t", f.Type.String())
 
+		if k == reflect.Func {
+			continue
+		}
+
 		if k != reflect.Interface && k != reflect.Struct && k != reflect.Ptr {
-			if tag := f.Tag.Get("bootable"); len(tag) > 0 {
-				v = ConfigurationContext.GetValue(tag)
+
+			tag := StructTagPlus{f.Tag}
+
+			if tag, ok := tag.Get(AUTOWIRED_FLAG + AUTOCONFIG_AUTOWIRED_TAG); ok {
+				v = configuration.ConfigurationContext.GetValue(tag)
 				if v != nil {
 					if k == reflect.Map || k == reflect.Array || k == reflect.Slice {
 
 					} else {
 						s := fmt.Sprintf("%v", v)
-						v, _ = str2Object(s, k)
+						v, _ = util.Str2Object(s, k)
 					}
 				}
 			}
 		} else {
-			bn := f.Tag.Get("bootable")
-			if len(bn) == 0 {
-				if k == reflect.Ptr {
-					newFieldValue = reflect.New(f.Type.Elem())
-					bn = newFieldValue.Elem().Type().String()
-				} else {
-					bn = newFieldValue.Type().String()
+
+			tag := StructTagPlus{f.Tag}
+			/*
+				if bn, ok := tag.Get("bootable"); ok {
+					if len(bn) == 0 {
+						if k == reflect.Ptr {
+							newFieldValue = reflect.New(f.Type.Elem())
+							bn = newFieldValue.Elem().Type().String()
+						} else {
+							bn = newFieldValue.Type().String()
+						}
+					}
+
+					if b, _ := c.pooled[bn]; b != nil {
+						v = b
+					} else {
+						if k == reflect.Ptr {
+							v, _ = c.getBeanByType(newFieldValue.Elem().Type())
+						} else {
+							v, _ = c.getBeanByType(newFieldValue.Type())
+						}
+					}
+				}
+			*/
+			// just for struct and interface
+			for _, key := range tag.GetKeys() {
+				if at, isAt := tag.GetAutowiredTag(key); isAt {
+					if handler, has := c.handler[strings.ToLower(at)]; has {
+						var source any
+						if k == reflect.Ptr {
+							//source = newFieldValue.Elem().Interface()
+							source = reflect.NewAt(newFieldValue.Type(), unsafe.Pointer(newFieldValue.UnsafeAddr())).Elem().Interface()
+						} else {
+							source = reflect.NewAt(newFieldValue.Type(), unsafe.Pointer(newFieldValue.UnsafeAddr())).Elem().Interface()
+						}
+
+						autoWiredMeta := AutoWiredMeta{}
+						autoWiredMeta.Value = newFieldValue
+						autoWiredMeta.Type = f.Type
+						autoWiredMeta.bean = source
+						autoWiredMeta.Tag = tag
+
+						if _v := handler.BeforeAutowired(autoWiredMeta); _v != nil {
+							v = _v
+						}
+
+						autoWiredMeta.bean = source
+						nv := reflect.ValueOf(v)
+
+						if nv.Type().Kind() == reflect.Ptr {
+							source = nv.Elem().Interface()
+						} else {
+							source = nv.Interface()
+						}
+
+						handler.PostAutowired(source, autoWiredMeta)
+					}
 				}
 			}
 
-			if b, _ := c.pooled[bn]; b != nil {
-				v = b
-			} else {
-				if k == reflect.Ptr {
-					v, _ = c.getBeanByType(newFieldValue.Elem().Type())
-				} else {
-					v, _ = c.getBeanByType(newFieldValue.Type())
-				}
-			}
 		}
 
 		if v != nil {
@@ -196,7 +261,6 @@ func (c *context) getBeanByType(t reflect.Type) (any, error) {
 				reflect.NewAt(newFieldValue.Type(), unsafe.Pointer(newFieldValue.UnsafeAddr())).Elem().Set(reflect.ValueOf(v))
 			}
 		}
-
 	}
 
 	// do init after autowired

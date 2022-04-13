@@ -3,6 +3,7 @@ package examples
 import (
 	"fmt"
 	. "github.com/gohutool/boot4go"
+	. "github.com/gohutool/boot4go/configuration"
 	"testing"
 	"time"
 )

@@ -1,4 +1,4 @@
-package boot4go
+package util
 
 import (
 	"fmt"
@@ -136,7 +136,7 @@ func Str2Float32(source string) (any, error) {
 	return nil, error
 }
 
-func str2Object(v string, k reflect.Kind) (any, error) {
+func Str2Object(v string, k reflect.Kind) (any, error) {
 	if len(v) == 0 {
 		return nil, nil
 	}

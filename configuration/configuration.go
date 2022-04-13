@@ -1,6 +1,8 @@
-package boot4go
+package configuration
 
 import (
+	"errors"
+	"github.com/gohutool/boot4go/util"
 	. "github.com/gohutool/expression4go"
 	. "github.com/gohutool/expression4go/spel"
 	"github.com/gohutool/log4go"
@@ -39,7 +41,7 @@ func (c configurationContext) LoadEnv() {
 	for _, env := range envs {
 		idx := strings.Index(env, "=")
 		if idx >= 1 && idx < len(env)-1 {
-			c.Put(Substring(env, 0, idx), Substring(env, idx+1, -1))
+			c.Put(util.Substring(env, 0, idx), util.Substring(env, idx+1, -1))
 		} else {
 			c.Put(env, "")
 		}
@@ -93,13 +95,36 @@ func (c configurationContext) ToMap() map[string]any {
 	return c.data
 }
 
-func (c configurationContext) GetValue(expression string) any {
+func (c configurationContext) GetValue2(expression string) (rtn any, err error) {
 	context := StandardEvaluationContext{}
 	context.AddPropertyAccessor(MapAccessor{})
 	context.SetVariables(c.ToMap())
 	parser := SpelExpressionParser{}
 
-	return parser.ParseExpression(expression).GetValueContext(&context)
+	defer func() {
+		if e := recover(); e != nil {
+			err = errors.New(e.(string))
+			rtn = nil
+		}
+	}()
+
+	rtn = parser.ParseExpression(expression).GetValueContext(&context)
+	err = nil
+	return
+}
+
+func (c configurationContext) GetValue(expression string) any {
+	if v, err := c.GetValue2(expression); err == nil {
+		return v
+	} else {
+		return nil
+	}
+	/*context := StandardEvaluationContext{}
+	context.AddPropertyAccessor(MapAccessor{})
+	context.SetVariables(c.ToMap())
+	parser := SpelExpressionParser{}
+
+	return parser.ParseExpression(expression).GetValueContext(&context)*/
 }
 
 func (c configurationContext) LoadYaml(filename string) {
