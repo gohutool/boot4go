@@ -174,3 +174,19 @@ func Str2Object(v string, k reflect.Kind) (any, error) {
 
 	return nil, nil
 }
+
+func Reduce[T any, R any](source []T, fn func(one T) (R, bool)) []R {
+	if source == nil {
+		return nil
+	}
+
+	rtn := make([]R, 0, len(source))
+
+	for _, o := range source {
+		if v, remain := fn(o); remain {
+			rtn = append(rtn, v)
+		}
+	}
+
+	return rtn
+}

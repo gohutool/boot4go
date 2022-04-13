@@ -2,6 +2,7 @@ package configuration
 
 import (
 	"errors"
+	"fmt"
 	"github.com/gohutool/boot4go/util"
 	. "github.com/gohutool/expression4go"
 	. "github.com/gohutool/expression4go/spel"
@@ -9,6 +10,7 @@ import (
 	"gopkg.in/yaml.v3"
 	"io/ioutil"
 	"os"
+	"regexp"
 	"strings"
 )
 
@@ -113,12 +115,55 @@ func (c configurationContext) GetValue2(expression string) (rtn any, err error) 
 	return
 }
 
+var _expression_reg = regexp.MustCompile(`\$\{(?s:(.*?))\}`)
+
 func (c configurationContext) GetValue(expression string) any {
-	if v, err := c.GetValue2(expression); err == nil {
-		return v
-	} else {
-		return nil
+
+	//strings.Split(expression)
+
+	result := _expression_reg.FindAllStringSubmatch(expression, -1)
+	l := len(result)
+	if l == 0 {
+		return expression
 	}
+
+	if l == 1 {
+		if v, err := c.GetValue2(expression); err == nil {
+			return v
+		} else {
+			return nil
+		}
+	}
+
+	yet := make(map[string]bool)
+
+	ks := util.Reduce(result, func(one []string) (string, bool) {
+		if one != nil {
+			if len(one[1]) > 0 {
+				if _, ok := yet[one[1]]; !ok {
+					return one[1], true
+				}
+			}
+		}
+
+		return "", false
+	})
+
+	//过滤<></>
+	for _, text := range ks {
+		var value any
+		olds := "${" + text + "}"
+		if v, err := c.GetValue2(olds); err == nil {
+			value = v
+		} else {
+			value = ""
+		}
+
+		expression = strings.ReplaceAll(expression, olds, fmt.Sprintf("%v", value))
+	}
+
+	return expression
+
 	/*context := StandardEvaluationContext{}
 	context.AddPropertyAccessor(MapAccessor{})
 	context.SetVariables(c.ToMap())
