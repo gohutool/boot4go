@@ -4,7 +4,9 @@ import (
 	"errors"
 	"fmt"
 	"github.com/gohutool/log4go"
+	"os"
 	"reflect"
+	"strings"
 	"sync"
 	"unsafe"
 )
@@ -33,12 +35,22 @@ func init() {
 	contextLogger.Debug("Yaml %v", ConfigurationContext.ToMap())
 }
 
-var Context = context{processing: make(map[string]any), pooled: make(map[string]any)}
+var Context = context{processing: make(map[string]any), pooled: make(map[string]any),
+	handler: make(map[string]AutowiredBeanHandler)}
 
 type context struct {
 	lock       sync.RWMutex
 	processing map[string]any
 	pooled     map[string]any
+	handler    map[string]AutowiredBeanHandler
+}
+
+func (c *context) RegistryBeanHandler(name string, handler AutowiredBeanHandler) {
+	if handler, ok := c.handler[strings.ToLower(name)]; ok {
+		contextLogger.Debug("%v is exist with %v", name, reflect.TypeOf(handler).String())
+	} else {
+		c.handler[name] = handler
+	}
 }
 
 func (c *context) RegistryBean(name string, beanType any) (any, error) {
@@ -186,6 +198,20 @@ func (c *context) getBeanByType(t reflect.Type) (any, error) {
 		}
 
 	}
+
+	// do init after autowired
+	func() {
+		if m := newValue.MethodByName("PostConstruct"); m.IsValid() {
+			defer func() {
+				if err := recover(); err != nil {
+					fmt.Fprintf(os.Stderr, "%v PostConstruct error %v\n", t.String(), err)
+					panic(err)
+				}
+			}()
+
+			m.Call([]reflect.Value{})
+		}
+	}()
 
 	//
 	//v := reflect.ValueOf(bean).Elem()

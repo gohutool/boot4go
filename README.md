@@ -210,10 +210,11 @@ There are several modules in Spring Boot. Here is a quick overview:
 
 ### boot4go
 
-### boot4go-autoconfigure
+### boot4go-proxy
 
-### boot4go-starters
+### boot4go-feign
 
+### boot4go-orm
 
 ## LICENCE
 

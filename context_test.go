@@ -21,12 +21,15 @@ import (
 */
 
 var logger log4go.Logger
+var bean any
 
 func init() {
 	log4go.LoggerManager.InitWithDefaultConfig()
 
 	d, _ := Context.RegistryBean("aaa", Hello{})
 	fmt.Println(d)
+
+	//bean, _ = Context.GetBean(Test{})
 	//Context.RegistryBeanInstance("boot4go.IHello", d)
 	/*
 		h := &Hello{}
@@ -45,6 +48,10 @@ type Test struct {
 	list    []any          `bootable:"${spec.volumes}"`
 }
 
+func (t *Test) PostConstruct() {
+	logger.Info("PostConstruct Test")
+}
+
 func (t *Test) sayHello2(w string) string {
 	return t.hello2.sayHello(w)
 }
@@ -61,12 +68,21 @@ func (h *Hello2) sayHello(t string) string {
 	return "Hello2 " + h.tag + " : " + t
 }
 
+func (t *Hello2) PostConstruct() {
+	logger.Info("PostConstruct Hello2")
+}
+
 type Hello struct {
 	tag string `bootable:"${tag.hello}"`
 }
 
 func (h *Hello) sayHello(t string) string {
 	return "Hello " + h.tag + " : " + t
+}
+
+func (t *Hello) PostConstruct() {
+	logger.Info("PostConstruct Hello")
+	panic("panic testing")
 }
 
 type IHello interface {
@@ -99,36 +115,20 @@ func TestContext(t *testing.T) {
 	h.sayHello("boot4go")
 }
 
-func TestAop(t *testing.T) {
-	i := &Test{}
-	iv := reflect.ValueOf(i).Elem()
-	name := iv.Type().Name()
-
-	fmt.Println(name)
-}
-
-func TestContext2(t *testing.T) {
-	ty := reflect.TypeOf(Test{})
-	count := ty.NumField()
-	fmt.Println("Count ", count)
-
-	for idx := 0; idx < count; idx++ {
-		a, ok := type2Str(ty.Field(idx).Type)
-		fmt.Println(ty.Field(idx).Name, " ", a, " ", ok)
-	}
-}
-
 func TestGetBean(t *testing.T) {
-	bean, _ := Context.GetBean(Test{})
-
+	bean, _ = Context.GetBean(Test{})
 	t1 := bean.(*Test)
 	logger.Info(t1.hello)
 	logger.Info("Hello2=" + t1.sayHello2("AAA"))
 	logger.Info("Hello=" + t1.sayHello("AAA"))
 	logger.Info("%v", &t1.hello)
 
-	bean, _ = Context.getBeanByName("boot4go.Test")
-	t1 = bean.(*Test)
+	time.Sleep(2 * time.Second)
+}
+
+func TestGetBeanByName(t *testing.T) {
+	bean, _ := Context.getBeanByName("boot4go.Test")
+	t1 := bean.(*Test)
 	logger.Info(t1.hello)
 	logger.Info("Hello2=" + t1.sayHello2("BBB"))
 	logger.Info("Hello=" + t1.sayHello("BBB"))
@@ -140,8 +140,6 @@ func TestGetBean(t *testing.T) {
 	bean, _ = Context.getBeanByName("boot4go.Hello2")
 	h2 := bean.(*Hello2)
 	logger.Info("%s", h2.sayHello("CCC"))
-
-	time.Sleep(10 * time.Second)
 }
 
 func TestContextConfiguration(t *testing.T) {
