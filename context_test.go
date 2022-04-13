@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/gohutool/boot4go/configuration"
 	"github.com/gohutool/log4go"
-	"reflect"
+	. "reflect"
 	"testing"
 	"time"
 )
@@ -27,7 +27,7 @@ var bean any
 func init() {
 	log4go.LoggerManager.InitWithDefaultConfig()
 
-	//Context.RegistryBeanHandler()
+	Context.RegistryAutowiredBeanHandler(new(SampleAutowiredHandler))
 
 	d, _ := Context.RegistryBean("aaa", Hello{})
 	fmt.Println(d)
@@ -36,7 +36,7 @@ func init() {
 	//Context.RegistryBeanInstance("boot4go.IHello", d)
 	/*
 		h := &Hello{}
-		Test{Hello2: h.(IHello)}*/
+		Test{hello2: h.(IHello)}*/
 
 	logger = log4go.LoggerManager.GetLogger("boot4go.context.test")
 }
@@ -46,7 +46,7 @@ type Test struct {
 	name    string         `@auto:"${metadata.name}"`
 	version string         `@auto:"${metadata.version}"`
 	hello   IHello         `@auto:"aaa"`
-	Hello2  Hello2         `@auto`
+	hello2  Hello2         `@auto`
 	hello3  Hello2         `@sample`
 	data    map[string]any `@auto:"${spec.runAsUser}"`
 	list    []any          `@auto:"${spec.volumes}"`
@@ -57,7 +57,11 @@ func (t *Test) PostConstruct() {
 }
 
 func (t *Test) sayHello2(w string) string {
-	return t.Hello2.sayHello(w)
+	return t.hello2.sayHello(w)
+}
+
+func (t *Test) sayHello3(w string) string {
+	return t.hello3.sayHello(w)
 }
 
 func (t *Test) sayHello(w string) string {
@@ -65,19 +69,19 @@ func (t *Test) sayHello(w string) string {
 }
 
 type Hello2 struct {
-	tag string `@auto:"${tag.hello2}"`
+	tag string `@auto:"${tag.hello2}  ${kind}"`
 }
 
 func (h *Hello2) sayHello(t string) string {
-	return "Hello2 " + h.tag + " : " + t
+	return "hello2 " + h.tag + " : " + t
 }
 
 func (t *Hello2) PostConstruct() {
-	logger.Info("PostConstruct Hello2")
+	logger.Info("PostConstruct hello2")
 }
 
 type Hello struct {
-	tag string `@auto:"${tag.hello}"`
+	tag string `@auto:"${tag.hello} ${kind}"`
 }
 
 func (h *Hello) sayHello(t string) string {
@@ -97,25 +101,33 @@ type SampleAutowiredHandler struct {
 }
 
 func (s *SampleAutowiredHandler) BeforeAutowired(meta AutoWiredMeta) any {
-	fmt.Printf("%v %v %v\n", meta.Type, meta.bean, meta.Tag)
-	return meta.bean
+	logger.Info("%v %v %v", meta.Type, meta.bean, meta.Tag)
+	return Hello2{tag: "SampleAutowiredHandler autowired"}
 }
 
 func (s *SampleAutowiredHandler) PostAutowired(source any, meta AutoWiredMeta) {
 
 }
 
+func (s *SampleAutowiredHandler) ID() string {
+	return "sample"
+}
+
+func (s *SampleAutowiredHandler) SupportType() []Kind {
+	return []Kind{CLASS, METHOD, FIELD}
+}
+
 func TestContext(t *testing.T) {
 	fmt.Println(log4go.LoggerManager)
 
 	test := &Test{}
-	typeof := reflect.TypeOf(test)
+	typeof := TypeOf(test)
 
 	fmt.Println(typeof.String())
 	fmt.Println(typeof.Kind().String())
 
-	fmt.Println(type2Str(reflect.TypeOf(test)))
-	fmt.Println(type2Str(reflect.TypeOf(*test)))
+	fmt.Println(type2Str(TypeOf(test)))
+	fmt.Println(type2Str(TypeOf(*test)))
 
 	h, ok := interface{}(test).(IHello)
 
@@ -123,8 +135,8 @@ func TestContext(t *testing.T) {
 
 	var ih IHello = &Hello{}
 
-	fmt.Println(type2Str(reflect.TypeOf(h)))
-	fmt.Println(type2Str(reflect.TypeOf(ih)))
+	fmt.Println(type2Str(TypeOf(h)))
+	fmt.Println(type2Str(TypeOf(ih)))
 
 	fmt.Println(IHello.sayHello(ih, "boot4go"))
 
@@ -135,8 +147,9 @@ func TestGetBean(t *testing.T) {
 	bean, _ = Context.GetBean(Test{})
 	t1 := bean.(*Test)
 	logger.Info(t1.hello)
-	logger.Info("Hello2=" + t1.sayHello2("AAA"))
+	logger.Info("hello2=" + t1.sayHello2("AAA"))
 	logger.Info("Hello=" + t1.sayHello("AAA"))
+	logger.Info("Hello3=" + t1.sayHello3("AAA"))
 	logger.Info("%v", &t1.hello)
 
 	time.Sleep(2 * time.Second)
@@ -146,14 +159,14 @@ func TestGetBeanByName(t *testing.T) {
 	bean, _ := Context.getBeanByName("boot4go.Test")
 	t1 := bean.(*Test)
 	logger.Info(t1.hello)
-	logger.Info("Hello2=" + t1.sayHello2("BBB"))
+	logger.Info("hello2=" + t1.sayHello2("BBB"))
 	logger.Info("Hello=" + t1.sayHello("BBB"))
 	logger.Info("%v", &t1.hello)
 
 	logger.Info("%v", &t1.data)
 	logger.Info("%v", &t1.list)
 
-	bean, _ = Context.getBeanByName("boot4go.Hello2")
+	bean, _ = Context.getBeanByName("boot4go.hello2")
 	h2 := bean.(*Hello2)
 	logger.Info("%s", h2.sayHello("CCC"))
 }
@@ -161,7 +174,7 @@ func TestGetBeanByName(t *testing.T) {
 func TestContextConfiguration(t *testing.T) {
 
 	bean, ok := Context.GetBean(&Test{})
-	fmt.Println(reflect.TypeOf(bean.(*Test)).String(), bean, ok)
+	fmt.Println(TypeOf(bean.(*Test)).String(), bean, ok)
 
 	logger := log4go.LoggerManager.GetLogger("test")
 
