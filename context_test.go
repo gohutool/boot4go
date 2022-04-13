@@ -99,6 +99,14 @@ func TestContext(t *testing.T) {
 	h.sayHello("boot4go")
 }
 
+func TestAop(t *testing.T) {
+	i := &Test{}
+	iv := reflect.ValueOf(i).Elem()
+	name := iv.Type().Name()
+
+	fmt.Println(name)
+}
+
 func TestContext2(t *testing.T) {
 	ty := reflect.TypeOf(Test{})
 	count := ty.NumField()
