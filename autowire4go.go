@@ -8,7 +8,7 @@ import (
 /**
 * golang-sample源代码，版权归锦翰科技（深圳）有限公司所有。
 * <p>
-* 文件名称 : autowire_handler.go
+* 文件名称 : autowire4go.go
 * 文件路径 :
 * 作者 : DavidLiu
 × Email: david.liu@ginghan.com
@@ -29,7 +29,7 @@ type AutoWiredMeta struct {
 	Value Value
 	Tag   StructTagPlus
 	Type  Type
-	bean  any
+	Bean  any
 }
 
 type AutowiredBeanHandler interface {
@@ -61,17 +61,17 @@ func (s *AutoConfigurationAutowiredBeanHandler) BeforeAutowired(meta AutoWiredMe
 	}
 
 	var v any
-	if b, _ := Context.pooled[bn]; b != nil {
+	if b, _ := Context.GetPooledBean(bn); b != nil {
 		v = b
 	} else {
 		if k == Ptr {
-			v, _ = Context.getBeanByType(meta.Value.Elem().Type())
+			v, _ = Context.GetBean(meta.Value.Elem().Type())
 		} else {
-			v, _ = Context.getBeanByType(meta.Value.Type())
+			v, _ = Context.GetBean(meta.Value.Type())
 		}
 	}
 
-	//fmt.Printf("%v %v %v\n", meta.Type, meta.bean, meta.Tag)
+	//fmt.Printf("%v %v %v\n", meta.Type, meta.Bean, meta.Tag)
 	return v
 }
 

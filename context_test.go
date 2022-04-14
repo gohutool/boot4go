@@ -101,7 +101,7 @@ type SampleAutowiredHandler struct {
 }
 
 func (s *SampleAutowiredHandler) BeforeAutowired(meta AutoWiredMeta) any {
-	logger.Info("%v %v %v", meta.Type, meta.bean, meta.Tag)
+	logger.Info("%v %v %v", meta.Type, meta.Bean, meta.Tag)
 	return Hello2{tag: "SampleAutowiredHandler autowired"}
 }
 

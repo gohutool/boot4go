@@ -98,16 +98,16 @@ func (c *context) GetBean(param any) (any, error) {
 	return c.getBeanByInstance(param)
 }
 
-//func (c *context) GetPooledBean(name string) (any, error) {
-//	v, ok := c.pooled[name]
-//
-//	if ok {
-//		return v, nil
-//	} else {
-//		return nil, errors.New("Not found " + name)
-//	}
-//
-//}
+func (c *context) GetPooledBean(name string) (any, error) {
+	v, ok := c.pooled[name]
+
+	if ok {
+		return v, nil
+	} else {
+		return nil, errors.New("Not found " + name)
+	}
+
+}
 
 func (c *context) getBeanByName(name string) (any, error) {
 	v, ok := c.pooled[name]
@@ -229,14 +229,14 @@ func (c *context) getBeanByType(t reflect.Type) (any, error) {
 						autoWiredMeta := AutoWiredMeta{}
 						autoWiredMeta.Value = newFieldValue
 						autoWiredMeta.Type = f.Type
-						autoWiredMeta.bean = source
+						autoWiredMeta.Bean = source
 						autoWiredMeta.Tag = tag
 
 						if _v := handler.BeforeAutowired(autoWiredMeta); _v != nil {
 							v = _v
 						}
 
-						autoWiredMeta.bean = source
+						autoWiredMeta.Bean = source
 						nv := reflect.ValueOf(v)
 
 						if nv.Type().Kind() == reflect.Ptr {
