@@ -127,7 +127,7 @@ func (c configurationContext) GetValue(expression string) any {
 		return expression
 	}
 
-	if l == 1 {
+	if l == 1 && strings.Index(expression, "$") == 0 && strings.Index(expression, "}") == len(expression)-1 {
 		if v, err := c.GetValue2(expression); err == nil {
 			return v
 		} else {
