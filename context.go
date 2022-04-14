@@ -256,7 +256,11 @@ func (c *context) getBeanByType(t reflect.Type) (any, error) {
 			if k == reflect.Ptr {
 				reflect.NewAt(newFieldValue.Type(), unsafe.Pointer(newFieldValue.UnsafeAddr())).Elem().Set(reflect.ValueOf(v))
 			} else if k == reflect.Struct {
-				reflect.NewAt(newFieldValue.Type(), unsafe.Pointer(newFieldValue.UnsafeAddr())).Elem().Set(reflect.ValueOf(v).Elem())
+				if reflect.TypeOf(v).Kind() == reflect.Ptr {
+					reflect.NewAt(newFieldValue.Type(), unsafe.Pointer(newFieldValue.UnsafeAddr())).Elem().Set(reflect.ValueOf(v).Elem())
+				} else {
+					reflect.NewAt(newFieldValue.Type(), unsafe.Pointer(newFieldValue.UnsafeAddr())).Elem().Set(reflect.ValueOf(v))
+				}
 			} else {
 				reflect.NewAt(newFieldValue.Type(), unsafe.Pointer(newFieldValue.UnsafeAddr())).Elem().Set(reflect.ValueOf(v))
 			}
