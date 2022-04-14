@@ -30,7 +30,10 @@ func TestConfiguration(t *testing.T) {
 	ConfigurationContext.Put("com.joinsunsoft.age", "10")
 	ConfigurationContext.Put("com.joinsunsoft.name", "DavidLiu")
 
+	fmt.Println(ConfigurationContext.GetValue("${test}"))
+	fmt.Println(ConfigurationContext.GetValue("${tag.hello}"))
+
 	fmt.Println("DATA :", ConfigurationContext.GetValue("${com.joinsunsoft}"))
 
-	time.Sleep(10 * time.Second)
+	time.Sleep(2 * time.Second)
 }

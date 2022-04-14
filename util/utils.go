@@ -1,9 +1,12 @@
 package util
 
 import (
+	"errors"
 	"fmt"
 	"reflect"
+	"regexp"
 	"strconv"
+	"strings"
 )
 
 /**
@@ -189,4 +192,78 @@ func Reduce[T any, R any](source []T, fn func(one T) (R, bool)) []R {
 	}
 
 	return rtn
+}
+
+// utils
+func Type2Str(t reflect.Type) (string, error) {
+	if t.Kind() == reflect.Struct || t.Kind() == reflect.Interface {
+		return t.String(), nil
+	} else if t.Kind() == reflect.Ptr {
+		return t.Elem().String(), nil
+	}
+
+	return t.String(), errors.New(t.String() + " is not struct or interface")
+}
+
+var _expression_reg = regexp.MustCompile(`\{(?s:(.*?))\}`)
+
+func ParseParameterName(str string) []string {
+	result := _expression_reg.FindAllStringSubmatch(str, -1)
+	l := len(result)
+	if l == 0 {
+		return nil
+	}
+
+	if l == 1 {
+		return []string{result[0][1]}
+	}
+
+	yet := make(map[string]bool)
+
+	ks := Reduce(result, func(one []string) (string, bool) {
+		if one != nil {
+			if len(one[1]) > 0 {
+				if _, ok := yet[one[1]]; !ok {
+					return one[1], true
+				}
+			}
+		}
+
+		return "", false
+	})
+
+	return ks
+}
+
+const _KEY_1 = "{"
+const _KEY_2 = "}"
+
+func ReplaceParameterValue(str string, keyAndValue map[string]string) string {
+	keys := ParseParameterName(str)
+
+	if len(keys) == 0 {
+		return str
+	}
+
+	for _, k := range keys {
+		if v, ok := keyAndValue[k]; ok {
+			str = strings.ReplaceAll(str, _KEY_1+k+_KEY_2, v)
+		} else {
+			//str = strings.ReplaceAll(str, k, v)
+		}
+	}
+
+	return str
+}
+
+func ReplaceParameterWithKeyValue(str string, keyAndValue map[string]string) string {
+	if len(keyAndValue) == 0 {
+		return str
+	}
+
+	for k, v := range keyAndValue {
+		str = strings.ReplaceAll(str, k, v)
+	}
+
+	return str
 }

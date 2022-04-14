@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/gohutool/boot4go/configuration"
 	. "github.com/gohutool/boot4go/reflect"
-	"github.com/gohutool/boot4go/util"
+	. "github.com/gohutool/boot4go/util"
 	"github.com/gohutool/log4go"
 	"os"
 	"reflect"
@@ -130,7 +130,7 @@ func (c *context) getBeanByInstance(instance any) (any, error) {
 // Combine type and any
 func (c *context) getBeanByType(t reflect.Type) (any, error) {
 	//t := reflect.TypeOf(obj)
-	beanName, _ := type2Str(t)
+	beanName, _ := Type2Str(t)
 	//
 	//c.lock.RLock()
 	//defer c.lock.RUnlock()
@@ -185,7 +185,7 @@ func (c *context) getBeanByType(t reflect.Type) (any, error) {
 
 					} else {
 						s := fmt.Sprintf("%v", v)
-						v, _ = util.Str2Object(s, k)
+						v, _ = Str2Object(s, k)
 					}
 				}
 			}
@@ -227,16 +227,17 @@ func (c *context) getBeanByType(t reflect.Type) (any, error) {
 						}
 
 						autoWiredMeta := AutoWiredMeta{}
+						autoWiredMeta.Object = newValue
 						autoWiredMeta.Value = newFieldValue
-						autoWiredMeta.Type = f.Type
-						autoWiredMeta.Bean = source
+						autoWiredMeta.Field = f
+						autoWiredMeta.Interface = source
 						autoWiredMeta.Tag = tag
 
 						if _v := handler.BeforeAutowired(autoWiredMeta); _v != nil {
 							v = _v
 						}
 
-						autoWiredMeta.Bean = source
+						autoWiredMeta.Interface = source
 						nv := reflect.ValueOf(v)
 
 						if nv.Type().Kind() == reflect.Ptr {
@@ -253,17 +254,24 @@ func (c *context) getBeanByType(t reflect.Type) (any, error) {
 		}
 
 		if v != nil {
-			if k == reflect.Ptr {
-				reflect.NewAt(newFieldValue.Type(), unsafe.Pointer(newFieldValue.UnsafeAddr())).Elem().Set(reflect.ValueOf(v))
-			} else if k == reflect.Struct {
-				if reflect.TypeOf(v).Kind() == reflect.Ptr {
-					reflect.NewAt(newFieldValue.Type(), unsafe.Pointer(newFieldValue.UnsafeAddr())).Elem().Set(reflect.ValueOf(v).Elem())
+			func() {
+				defer func() {
+					if err := recover(); err != nil {
+						panic(fmt.Sprintf("%v.%v(%v) %v", newValue.Type().String(), f.Name, newFieldValue.Type().String(), err))
+					}
+				}()
+				if k == reflect.Ptr {
+					reflect.NewAt(newFieldValue.Type(), unsafe.Pointer(newFieldValue.UnsafeAddr())).Elem().Set(reflect.ValueOf(v))
+				} else if k == reflect.Struct {
+					if reflect.TypeOf(v).Kind() == reflect.Ptr {
+						reflect.NewAt(newFieldValue.Type(), unsafe.Pointer(newFieldValue.UnsafeAddr())).Elem().Set(reflect.ValueOf(v).Elem())
+					} else {
+						reflect.NewAt(newFieldValue.Type(), unsafe.Pointer(newFieldValue.UnsafeAddr())).Elem().Set(reflect.ValueOf(v))
+					}
 				} else {
 					reflect.NewAt(newFieldValue.Type(), unsafe.Pointer(newFieldValue.UnsafeAddr())).Elem().Set(reflect.ValueOf(v))
 				}
-			} else {
-				reflect.NewAt(newFieldValue.Type(), unsafe.Pointer(newFieldValue.UnsafeAddr())).Elem().Set(reflect.ValueOf(v))
-			}
+			}()
 		}
 	}
 
@@ -301,7 +309,7 @@ func (c *context) getBeanByType(t reflect.Type) (any, error) {
 	//	}
 	//
 	//	//fV := reflect.ValueOf(bean).Elem().Field(idx)
-	//	//a, ok := type2Str(fv.Elem().Type())
+	//	//a, ok := Type2Str(fv.Elem().Type())
 	//	//fmt.Println(f.Name, " ", a, " ", ok)
 	//}
 
@@ -325,15 +333,4 @@ func (c *context) resolveBean(name string) (any, error) {
 	}
 
 	return nil, errors.New("Not found \"" + name + "\" bean")
-}
-
-// utils
-func type2Str(t reflect.Type) (string, error) {
-	if t.Kind() == reflect.Struct || t.Kind() == reflect.Interface {
-		return t.String(), nil
-	} else if t.Kind() == reflect.Ptr {
-		return t.Elem().String(), nil
-	}
-
-	return t.String(), errors.New(t.String() + " is not struct or interface")
 }

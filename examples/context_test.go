@@ -1,8 +1,11 @@
-package boot4go
+package examples
 
 import (
 	"fmt"
+	. "github.com/gohutool/boot4go"
 	"github.com/gohutool/boot4go/configuration"
+	_ "github.com/gohutool/boot4go/feign"
+	. "github.com/gohutool/boot4go/util"
 	"github.com/gohutool/log4go"
 	. "reflect"
 	"testing"
@@ -42,14 +45,16 @@ func init() {
 }
 
 type Test struct {
-	age     int16          `@auto:"${metadata.major}"`
-	name    string         `@auto:"${metadata.name}"`
-	version string         `@auto:"${metadata.version}"`
-	hello   IHello         `@auto:"aaa"`
-	hello2  Hello2         `@auto`
-	hello3  Hello2         `@sample`
-	data    map[string]any `@auto:"${spec.runAsUser}"`
-	list    []any          `@auto:"${spec.volumes}"`
+	age       int16          `@auto:"${metadata.major}"`
+	name      string         `@auto:"${metadata.name}"`
+	version   string         `@auto:"${metadata.version}"`
+	hello     IHello         `@auto:"aaa"`
+	hello2    Hello2         `@auto`
+	hello3    Hello2         `@sample`
+	feign     *SampleFeign   `@feign`
+	userFeign *UserFeign     `@feign`
+	data      map[string]any `@auto:"${spec.runAsUser}"`
+	list      []any          `@auto:"${spec.volumes}"`
 }
 
 func (t *Test) PostConstruct() {
@@ -101,7 +106,7 @@ type SampleAutowiredHandler struct {
 }
 
 func (s *SampleAutowiredHandler) BeforeAutowired(meta AutoWiredMeta) any {
-	logger.Info("%v %v %v", meta.Type, meta.Bean, meta.Tag)
+	logger.Info("%v %v %v", meta.Field, meta.Interface, meta.Tag)
 	return Hello2{tag: "SampleAutowiredHandler autowired"}
 }
 
@@ -117,7 +122,7 @@ func (s *SampleAutowiredHandler) SupportType() []Kind {
 	return []Kind{CLASS, METHOD, FIELD}
 }
 
-func TestContext(t *testing.T) {
+func TestContextOne(t *testing.T) {
 	fmt.Println(log4go.LoggerManager)
 
 	test := &Test{}
@@ -126,8 +131,8 @@ func TestContext(t *testing.T) {
 	fmt.Println(typeof.String())
 	fmt.Println(typeof.Kind().String())
 
-	fmt.Println(type2Str(TypeOf(test)))
-	fmt.Println(type2Str(TypeOf(*test)))
+	fmt.Println(Type2Str(TypeOf(test)))
+	fmt.Println(Type2Str(TypeOf(*test)))
 
 	h, ok := interface{}(test).(IHello)
 
@@ -135,8 +140,8 @@ func TestContext(t *testing.T) {
 
 	var ih IHello = &Hello{}
 
-	fmt.Println(type2Str(TypeOf(h)))
-	fmt.Println(type2Str(TypeOf(ih)))
+	fmt.Println(Type2Str(TypeOf(h)))
+	fmt.Println(Type2Str(TypeOf(ih)))
 
 	fmt.Println(IHello.sayHello(ih, "boot4go"))
 
@@ -151,12 +156,16 @@ func TestGetBean(t *testing.T) {
 	logger.Info("Hello=" + t1.sayHello("AAA"))
 	logger.Info("Hello3=" + t1.sayHello3("AAA"))
 	logger.Info("%v", &t1.hello)
+	logger.Info("%v %v", t1.data, t1.list)
+
+	logger.Info(t1.feign.GetUser("10001", "guest"))
+	logger.Info(t1.userFeign.GetUser("20001", "user"))
 
 	time.Sleep(2 * time.Second)
 }
 
 func TestGetBeanByName(t *testing.T) {
-	bean, _ := Context.getBeanByName("boot4go.Test")
+	bean, _ := Context.GetBean("boot4go.Test")
 	t1 := bean.(*Test)
 	logger.Info(t1.hello)
 	logger.Info("hello2=" + t1.sayHello2("BBB"))
@@ -166,7 +175,7 @@ func TestGetBeanByName(t *testing.T) {
 	logger.Info("%v", &t1.data)
 	logger.Info("%v", &t1.list)
 
-	bean, _ = Context.getBeanByName("boot4go.hello2")
+	bean, _ = Context.GetBean("boot4go.hello2")
 	h2 := bean.(*Hello2)
 	logger.Info("%s", h2.sayHello("CCC"))
 }
@@ -184,4 +193,30 @@ func TestContextConfiguration(t *testing.T) {
 	logger.Info("YAML %v", configuration.ConfigurationContext.GetValue("${spec.volumes[0]}"))
 
 	time.Sleep(10 * time.Second)
+}
+
+type SampleFeign struct {
+	Url     string `${test.name}`
+	Address string `${test.url}`
+
+	GetUser func(id string, userType string) string `path:"${test.feign.path}/{1}/?{2}"`
+}
+
+type UserFeign struct {
+	Url     string `user`
+	Address string `http://users`
+
+	GetUser func(id string, userType string) string `path:"${test.feign.path}/{2}/?{1}"`
+}
+
+func TestFeignParse(t *testing.T) {
+	v := "/sayHello/{1}/?{2}"
+	m := make(map[string]string)
+	m["{1}"] = "user"
+	m["{2}"] = "1001"
+	fmt.Println(ReplaceParameterWithKeyValue(v, m))
+
+	m["1"] = "user001"
+	m["2"] = "10011002"
+	fmt.Println(ReplaceParameterValue(v, m))
 }

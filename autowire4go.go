@@ -26,10 +26,11 @@ const (
 )
 
 type AutoWiredMeta struct {
-	Value Value
-	Tag   StructTagPlus
-	Type  Type
-	Bean  any
+	Object    Value
+	Value     Value
+	Tag       StructTagPlus
+	Field     StructField
+	Interface any
 }
 
 type AutowiredBeanHandler interface {
@@ -51,7 +52,7 @@ func (s *AutoConfigurationAutowiredBeanHandler) ID() string {
 func (s *AutoConfigurationAutowiredBeanHandler) BeforeAutowired(meta AutoWiredMeta) any {
 	bn, _ := meta.Tag.Get(AUTOWIRED_FLAG + AUTOCONFIG_AUTOWIRED_TAG)
 
-	k := meta.Type.Kind()
+	k := meta.Field.Type.Kind()
 	if len(bn) == 0 {
 		if k == Ptr {
 			bn = meta.Value.Elem().Type().String()
@@ -71,7 +72,7 @@ func (s *AutoConfigurationAutowiredBeanHandler) BeforeAutowired(meta AutoWiredMe
 		}
 	}
 
-	//fmt.Printf("%v %v %v\n", meta.Type, meta.Bean, meta.Tag)
+	//fmt.Printf("%v %v %v\n", meta.Type, meta.Interface, meta.Tag)
 	return v
 }
 
